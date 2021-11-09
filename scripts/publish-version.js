@@ -27,6 +27,7 @@ function getVersion() {
     var ls = spawn('sh', [getVersionPath]);
     ls.stdout.on("data", function (data) {
         packageJsonVersion = `${data}`;
+        packageJsonVersion = packageJsonVersion.trim();
     });
     ls.stderr.on("data", data => {
         console.log(`stderr: ${data}`);

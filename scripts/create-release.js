@@ -23,6 +23,7 @@ function getVersion() {
     var ls = spawn('sh', [getVersionPath]);
     ls.stdout.on("data", function (data) {
         packageJsonVersion = `${data}`;
+        packageJsonVersion = packageJsonVersion.trim();
     });
     ls.stderr.on("data", data => {
         console.log(`stderr: ${data}`);
@@ -107,10 +108,10 @@ function getCurrentBranch() {
 }
 
 function checkBranch() {
-    if (currentBranch.trim() == 'development') {
+    if (currentBranch.trim() == 'development' || currentBranch.trim() == "minor" || currentBranch.trim() == "patch") {
         bumpVersion();
     } else {
-        console.log('\nRelease can only be created from development branch.\nYour current branch is', currentBranch);
+        console.log('\nRelease can only be created from development or minor or patch branch.\nYour current branch is', currentBranch);
     }
 }
 

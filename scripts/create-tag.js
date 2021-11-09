@@ -19,6 +19,7 @@ function getVersion() {
     var ls = spawn('sh', [getVersionPath]);
     ls.stdout.on("data", function (data) {
         packageJsonVersion = `${data}`;
+        packageJsonVersion = packageJsonVersion.trim();
     });
     ls.stderr.on("data", data => {
         console.log(`stderr: ${data}`);
@@ -74,16 +75,18 @@ function createTagGithub(owner, repo) {
     } else {
         preRelease = false;
     }
+
+    let tagName = `v${packageJsonVersion}`;
     octokit.rest.repos.createRelease({
         owner: owner,
         repo: repo,
-        tag_name: `v${packageJsonVersion}`,
+        tag_name: tagName,
         prerelease: preRelease,
-        name: `v${packageJsonVersion}`,
+        name: tagName,
     }).then((response) => {
         console.log("Tag created Successfully!");
     }).catch((error) => {
-        console.error(error.response.data.message);
+        console.error(error.response.data);
     });
 }
 
