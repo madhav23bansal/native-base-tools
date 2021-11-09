@@ -5,9 +5,9 @@
   "repository": "git@github.com:madhav23bansal/native-base-tools.git",
   "author": "madhav23bansal <madhavb230100@gmail.com>",
   "license": "MIT",
-  "bin": "./index.js",
+  "bin": "index.js",
   "scripts": {
-    "start": "./index.js",
+    "start": "node index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
