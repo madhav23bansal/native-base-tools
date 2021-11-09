@@ -30,6 +30,7 @@ async function createBranch() {
         console.error("Please try again!");
         return;
     }
+
     const repsoneForBranchName = await prompts(branchNameQuestion);
     let branchName = repsoneForBranchName.value;
     if (!branchName) {

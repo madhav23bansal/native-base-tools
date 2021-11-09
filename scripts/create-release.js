@@ -40,17 +40,52 @@ async function promptQuestions() {
         console.error("Please check GITHUB_PERSONAL_TOKEN in your env file");
     }
 
-    const response = await prompts([{
-        type: 'text',
+    let options = [
+        { title: 'Patch', value: 'patch' },
+        { title: 'Minor', value: 'minor' },
+        { title: 'Major', value: 'major' },
+        { title: 'Custom', value: 'custom' },
+    ];
+
+    let promptsConfig = [{
+        type: 'select',
         name: 'value',
-        message: `Please enter new version, old version is v${packageJsonVersion}`
-    }]);
+        message: 'Pick an option',
+        choices: options,
+        initial: 0
+    }];
+
+    const response = await prompts(promptsConfig);
     let choice = response.value;
     if (!choice) {
         console.error("Please try again!");
         return;
     }
-    version = choice;
+
+    createVersion(choice);
+}
+
+async function createVersion(choice) {
+    if (choice == 'patch') {
+        version = parseVersion(2);
+    } else if (choice == 'minor') {
+        version = parseVersion(1);
+    } else if (choice == 'major') {
+        version = parseVersion(0);
+    } else {
+        let versionQuestion = [{
+            type: 'text',
+            name: 'value',
+            message: `Please enter custom version`
+        }];
+        const versionFromPrompt = await prompts(versionQuestion);
+        let versionFromUser = versionFromPrompt.value;
+        if (!versionFromUser) {
+            console.error("Please try again!");
+            return;
+        }
+        version = versionFromUser;
+    }
     releaseBranch = 'release/' + version;
     getCurrentBranch();
 }
@@ -186,6 +221,14 @@ function createPRforGitlab() {
     ls.on("close", code => {
         console.log(`Created PR!`);
     });
+}
+
+// Utils
+function parseVersion(index) {
+    let parsedArray = packageJsonVersion.split('.');
+    parsedArray[index] = parseFloat(parsedArray[index]) + 1;
+    let final = parsedArray.join('.');
+    return final;
 }
 
 
