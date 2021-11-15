@@ -24,15 +24,37 @@ let branchNameQuestion = [{
 }];
 
 async function createBranch() {
-    const response = await prompts(promptsConfig);
-    let choice = response.value;
+    let arg = process.argv.slice(3)[0];
+    let choice;
+    let branchName;
+
+    options.some(element => {
+        if (arg == element.value) {
+            choice = element.value;
+            return true;
+        }
+    });
+    if (!choice) {
+        if (process.argv.slice(3).length > 0) {
+            console.error("Please pass correct argument or choose from options given below");
+        }
+        const response = await prompts(promptsConfig);
+        choice = response.value;
+    }
     if (!choice) {
         console.error("Please try again!");
         return;
     }
 
-    const repsoneForBranchName = await prompts(branchNameQuestion);
-    let branchName = repsoneForBranchName.value;
+    let arg2 = process.argv.slice(4)[0];
+    if (arg2) {
+        branchName = arg2;
+    }
+    else {
+        const repsoneForBranchName = await prompts(branchNameQuestion);
+        branchName = repsoneForBranchName.value;
+    }
+
     if (!branchName) {
         console.error("Please try again!");
         return;

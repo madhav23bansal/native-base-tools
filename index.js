@@ -22,10 +22,23 @@ let promptsConfig = [{
 }];
 
 (async () => {
-    const response = await prompts(promptsConfig);
-    let choice = response.value;
+    let arg = require('minimist')(process.argv.slice(2));
+    let choice;
+    options.some(element => {
+        if (arg.action == element.value.name) {
+            choice = element.value;
+            return true;
+        }
+    });
     if (!choice) {
-        console.error("Please try again!");
+        if (process.argv.slice(2).length > 0) {
+            console.error("Please pass correct action or choose from options given below");
+        }
+        const response = await prompts(promptsConfig);
+        choice = response.value;
+    }
+    if (!choice) {
+        console.log("Please try again!");
         return;
     }
     choice();
