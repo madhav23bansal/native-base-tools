@@ -12,8 +12,31 @@ let remoteData;
 let packageJsonVersion;
 
 function createTag() {
-    getVersion();
+    setRemoteDataAndCheckForEnv();
 };
+
+function setRemoteDataAndCheckForEnv() {
+    var ls = spawn('git', ['remote', '-v']);
+
+    ls.stdout.on("data", function (data) {
+        remoteData = JSON.stringify(`${data}`);
+    });
+    ls.stderr.on("data", data => {
+        console.log(`error: ${data}`);
+    });
+    ls.on("error", error => {
+        console.log(`error: ${error.message}`);
+    });
+    ls.on("close", code => {
+        if (remoteData.match(/\@([^)]+)\:/).pop() == "github.com") {
+            if (!process.env.GITHUB_PERSONAL_TOKEN) {
+                console.error("Please check GITHUB_PERSONAL_TOKEN in your env file");
+                return;
+            }
+        }
+        getVersion();
+    });
+}
 
 function getVersion() {
     var ls = spawn('sh', [getVersionPath]);
@@ -23,31 +46,6 @@ function getVersion() {
     });
     ls.stderr.on("data", data => {
         console.log(`stderr: ${data}`);
-    });
-    ls.on("error", error => {
-        console.log(`error: ${error.message}`);
-    });
-    ls.on("close", code => {
-        checkToken();
-    });
-}
-
-function checkToken() {
-    if (process.env.GITHUB_PERSONAL_TOKEN) {
-        getOriginData();
-    } else {
-        console.error("Please check GITHUB_PERSONAL_TOKEN in your env file");
-    }
-}
-
-function getOriginData() {
-    var ls = spawn('git', ['remote', '-v']);
-
-    ls.stdout.on("data", function (data) {
-        remoteData = JSON.stringify(`${data}`);
-    });
-    ls.stderr.on("data", data => {
-        console.log(`Switched to a new branch: release/${data}`);
     });
     ls.on("error", error => {
         console.log(`error: ${error.message}`);

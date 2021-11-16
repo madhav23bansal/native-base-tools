@@ -37,8 +37,8 @@ function setRemoteDataAndCheckForEnv() {
                 console.error("Please check GITHUB_PERSONAL_TOKEN in your env file");
                 return;
             }
-            getVersion();
         }
+        getVersion();
     });
 }
 
@@ -244,18 +244,8 @@ function createReleaseBranch() {
         console.log(`error: ${error.message}`);
     });
     ls.on("close", code => {
-        checkRemote();
-    });
-}
-
-function checkRemote() {
-    if (remoteData) {
         createPR();
-    }
-    else {
-        console.error("Remote Data cannot be empty");
-        return;
-    }
+    });
 }
 
 function createPR() {
