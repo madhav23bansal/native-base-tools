@@ -6,18 +6,6 @@ const prompts = require("prompts");
 const getVersionPath = __dirname + "/get-package-json-version.sh";
 
 let packageJsonVersion;
-let options = [
-    { title: "Publish npm version", value: 'npm' },
-    { title: "Publish vscode extention", value: 'vscode' },
-];
-
-let promptsConfig = [{
-    type: 'select',
-    name: 'value',
-    message: 'Pick an option',
-    choices: options,
-    initial: 0
-}];
 
 function publishVersion() {
     getVersion();
@@ -36,15 +24,40 @@ function getVersion() {
         console.log(`error: ${error.message}`);
     });
     ls.on("close", code => {
-
         promptQuestions();
     });
 }
 
 async function promptQuestions() {
-    const response = await prompts(promptsConfig);
-    let choice = response.value;
+    let type = require('minimist')(process.argv.slice(2)).type;
+    let choice;
 
+    let options = [
+        { title: "Publish npm version", value: 'npm' },
+        { title: "Publish vscode extention", value: 'vscode' },
+    ];
+
+    let promptsConfig = [{
+        type: 'select',
+        name: 'value',
+        message: 'Pick an option',
+        choices: options,
+        initial: 0
+    }];
+
+    options.some(element => {
+        if (type == element.value) {
+            choice = element.value;
+            return true;
+        }
+    });
+    if (!choice) {
+        if (type) {
+            console.error("Please pass correct type or choose from options given below");
+        }
+        const response = await prompts(promptsConfig);
+        choice = response.value;
+    }
     if (!choice) {
         console.error("Please try again!");
         return;

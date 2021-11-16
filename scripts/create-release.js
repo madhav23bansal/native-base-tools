@@ -60,6 +60,11 @@ function getVersion() {
 }
 
 async function promptQuestions() {
+    let type = require('minimist')(process.argv.slice(2)).type;
+    let value = require('minimist')(process.argv.slice(2)).value;
+    let choice;
+    let choice2;
+
     let subOptions = [
         { title: 'Patch', value: 'patch' },
         { title: 'Minor', value: 'minor' },
@@ -100,12 +105,6 @@ async function promptQuestions() {
         choices: optionsWithoutAlpha,
         initial: 0
     }];
-
-    let type = require('minimist')(process.argv.slice(2)).type;
-    let value = require('minimist')(process.argv.slice(2)).value;
-    let choice;
-    let choice2;
-
 
     if (packageJsonVersion.includes('alpha')) {
         options.some(element => {
