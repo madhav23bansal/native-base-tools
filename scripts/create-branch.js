@@ -24,7 +24,8 @@ let branchNameQuestion = [{
 }];
 
 async function createBranch() {
-    let arg = process.argv.slice(3)[0];
+    let arg = require('minimist')(process.argv.slice(2)).type;
+    let arg2 = require('minimist')(process.argv.slice(2)).value;
     let choice;
     let branchName;
 
@@ -35,7 +36,7 @@ async function createBranch() {
         }
     });
     if (!choice) {
-        if (process.argv.slice(3).length > 0) {
+        if (arg) {
             console.error("Please pass correct argument or choose from options given below");
         }
         const response = await prompts(promptsConfig);
@@ -46,7 +47,6 @@ async function createBranch() {
         return;
     }
 
-    let arg2 = process.argv.slice(4)[0];
     if (arg2) {
         branchName = arg2;
     }

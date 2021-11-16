@@ -31,7 +31,7 @@ let promptsConfig = [{
         }
     });
     if (!choice) {
-        if (process.argv.slice(2).length > 0) {
+        if (arg.action) {
             console.error("Please pass correct action or choose from options given below");
         }
         const response = await prompts(promptsConfig);

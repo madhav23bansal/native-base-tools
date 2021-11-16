@@ -101,62 +101,92 @@ async function promptQuestions() {
         initial: 0
     }];
 
-    // let arg = process.argv.slice(3)[0];
+    let type = require('minimist')(process.argv.slice(2)).type;
+    let value = require('minimist')(process.argv.slice(2)).value;
     let choice;
     let choice2;
 
+
     if (packageJsonVersion.includes('alpha')) {
-        const response = await prompts(promptsConfig);
-        choice = response.value;
+        options.some(element => {
+            if (type == element.value) {
+                choice = element.value;
+                return true;
+            }
+        });
+        if (!choice) {
+            if (type) {
+                console.error("Please pass correct type or choose from options given below");
+            }
+            const response = await prompts(promptsConfig);
+            choice = response.value;
+        }
         if (!choice) {
             console.log("Please try again!");
             return;
         }
     } else if (packageJsonVersion.includes('rc')) {
-        const response = await prompts(configWithoutAlpha);
-        choice = response.value;
+        optionsWithoutAlpha.some(element => {
+            if (type == element.value) {
+                choice = element.value;
+                return true;
+            }
+        });
         if (!choice) {
-            console.log("Please try again");
-            return;
+            if (type) {
+                console.error("Please pass correct type or choose from options given below");
+            }
+            const response = await prompts(configWithoutAlpha);
+            choice = response.value;
         }
-    } else {
-        const response = await prompts(promptsConfig);
-        choice = response.value;
         if (!choice) {
             console.log("Please try again!");
             return;
         }
-        const response2 = await prompts(subPromptsConfig);
-        choice2 = response2.value;
+    } else {
+        options.some(element => {
+            if (type == element.value) {
+                choice = element.value;
+                return true;
+            }
+        });
+        if (!choice) {
+            if (type) {
+                console.error("Please pass correct type or choose from options given below");
+            }
+            const response = await prompts(promptsConfig);
+            choice = response.value;
+        }
+        if (!choice) {
+            console.log("Please try again!");
+            return;
+        }
+
+        subOptions.some(element => {
+            if (value == element.value) {
+                choice2 = element.value;
+                return true;
+            }
+        });
+        if (!choice2) {
+            if (value) {
+                console.error("Please pass correct value or choose from options given below");
+            }
+            const response = await prompts(promptsConfig);
+            choice2 = response.value;
+        }
         if (!choice2) {
             console.log("Please try again!");
             return;
         }
     }
-
-    // options.some(element => {
-    //     if (arg == element.value) {
-    //         choice = element.value;
-    //         return true;
-    //     }
-    // });
-    // if (!choice) {
-    //     if (process.argv.slice(3).length > 0) {
-    //         console.error("Please pass correct argument or choose from options given below");
-    //     }
-    //     const response = await prompts(promptsConfig);
-    //     choice = response.value;
-    // }
-    // if (!choice) {
-    //     console.error("Please try again!");
-    //     return;
-    // }
-
     createVersion(choice, choice2);
 }
 
 async function createVersion(choice, choice2) {
+    console.log(choice, choice2);
     version = parseVersion(choice, choice2);
+    console.log(version);
     releaseBranch = 'release/' + version;
     getCurrentBranch();
 }
