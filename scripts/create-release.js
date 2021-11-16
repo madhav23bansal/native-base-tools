@@ -171,7 +171,7 @@ async function promptQuestions() {
             if (value) {
                 console.error("Please pass correct value or choose from options given below");
             }
-            const response = await prompts(promptsConfig);
+            const response = await prompts(subPromptsConfig);
             choice2 = response.value;
         }
         if (!choice2) {
