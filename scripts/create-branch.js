@@ -79,11 +79,7 @@ function executeFunction(choice, branchName) {
         console.log(`error: ${error.message}`);
     });
     ls.on("close", code => {
-        if (choice == 'fix' || choice == 'feat') {
-            console.log(`Created branch: ${choice}/${branchName}`);
-        } else {
-            console.log(`Created branch: ${branchName}`);
-        }
+        console.log("Finished!");
     });
 }
 
