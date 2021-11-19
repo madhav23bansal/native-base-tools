@@ -26,7 +26,7 @@ function setRemoteDataAndCheckForEnv() {
         remoteData = JSON.stringify(`${data}`);
     });
     ls.stderr.on("data", data => {
-        console.log(`Switched to a new branch: release/${data}`);
+        console.log(`error: ${data}`);
     });
     ls.on("error", error => {
         console.log(`error: ${error.message}`);
