@@ -6,6 +6,7 @@ const { spawn } = require('child_process');
 
 const octokit = new Octokit({ auth: process.env.GITHUB_PERSONAL_TOKEN });
 const getVersionPath = __dirname + "/get-package-json-version.sh";
+const getBranchPath = __dirname + "/get-branch.sh";
 
 let preRelease;
 let remoteData;
