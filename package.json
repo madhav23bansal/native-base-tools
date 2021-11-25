@@ -1,6 +1,6 @@
 {
   "name": "native-base-tools",
-  "version": "1.0.6",
+  "version": "1.0.7-rc.0",
   "main": "index.js",
   "repository": "git@github.com:madhav23bansal/native-base-tools.git",
   "author": "madhav23bansal <madhavb230100@gmail.com>",
