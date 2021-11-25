@@ -196,9 +196,7 @@ async function promptQuestions() {
 }
 
 async function createVersion(choice, choice2) {
-    console.log(choice, choice2);
     version = parseVersion(choice, choice2);
-    console.log(version);
     releaseBranch = 'release/' + version;
     getCurrentBranch();
 }
@@ -305,8 +303,6 @@ function pushToGithub(repo, owner, prTitle, base, head) {
 }
 
 function createPRforGithub(repo, owner, title, base, head) {
-    console.log(repo, owner, title, base, head);
-    console.log(process.env.GITHUB_PERSONAL_TOKEN);
     octokit.rest.pulls.create({
         owner: owner,
         repo: repo,
