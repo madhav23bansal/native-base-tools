@@ -2,7 +2,7 @@
 
 require('dotenv').config();
 const { Octokit } = require("@octokit/rest");
-const { spawn } = require("child_process");
+const { spawn, execSync } = require("child_process");
 const prompts = require("prompts");
 
 const octokit = new Octokit({ auth: process.env.GITHUB_PERSONAL_TOKEN });
@@ -14,10 +14,23 @@ let releaseBranch;
 let currentBranch;
 let packageJsonVersion;
 let remoteData;
+let defaultBranch;
 
 function createRelease() {
-    setRemoteDataAndCheckForEnv();
+    setDefaultBranch();
 };
+
+function setDefaultBranch() {
+
+    try {
+        var result = execSync('echo `git remote show origin | grep \'HEAD branch\'` | cut -d ":" -f2-');
+        defaultBranch = `${result}`;
+        setRemoteDataAndCheckForEnv();
+    } catch (ex) {
+        console.log(ex.stdout);
+        return;
+    }
+}
 
 function setRemoteDataAndCheckForEnv() {
     var ls = spawn('git', ['remote', '-v']);
@@ -32,7 +45,7 @@ function setRemoteDataAndCheckForEnv() {
         console.log(`error: ${error.message}`);
     });
     ls.on("close", code => {
-        if (remoteData.match(/\@([^)]+)\:/).pop() == "github.com") {
+        if (remoteData.includes('github.com')) {
             if (!process.env.GITHUB_PERSONAL_TOKEN) {
                 console.error("Please check GITHUB_PERSONAL_TOKEN in your env file");
                 return;
@@ -248,14 +261,26 @@ function createReleaseBranch() {
 }
 
 function createPR() {
-    if (remoteData.match(/\@([^)]+)\:/).pop() == "github.com") {
+    if (remoteData.includes("github.com")) {
+        let owner;
+        let repo;
         let remoteSample = remoteData.match(/\:([^)]+)\./).pop();
-        let gitVariables = remoteSample.split('/');
-        let owner = gitVariables[0].trim();
-        let repo = gitVariables[1].trim();
+
+        if (remoteSample.includes('github.com')) {
+            let gitVariables = remoteSample.split('/');
+            owner = gitVariables[3].trim();
+            repo = gitVariables[4].trim();
+        }
+        else {
+            let gitVariables = remoteSample.split('/');
+            owner = gitVariables[0].trim();
+            repo = gitVariables[1].trim();
+        }
+
         let prTitle = 'release ' + version;
-        let base = 'main';
+        let base = defaultBranch.trim();
         let head = releaseBranch;
+
         pushToGithub(repo, owner, prTitle, base, head);
     } else {
         createPRforGitlab();
@@ -280,6 +305,8 @@ function pushToGithub(repo, owner, prTitle, base, head) {
 }
 
 function createPRforGithub(repo, owner, title, base, head) {
+    console.log(repo, owner, title, base, head);
+    console.log(process.env.GITHUB_PERSONAL_TOKEN);
     octokit.rest.pulls.create({
         owner: owner,
         repo: repo,

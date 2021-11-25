@@ -10,10 +10,36 @@ const getVersionPath = __dirname + "/get-package-json-version.sh";
 let preRelease;
 let remoteData;
 let packageJsonVersion;
+let currentBranch;
 
 function createTag() {
-    setRemoteDataAndCheckForEnv();
+    getCurrentBranch();
 };
+
+function getCurrentBranch() {
+    var ls = spawn('sh', [getBranchPath]);
+    ls.stdout.on("data", function (data) {
+        currentBranch = `${data}`;
+    });
+    ls.stderr.on("data", data => {
+        console.log(`stderr: ${data}`);
+    });
+    ls.on("error", error => {
+        console.log(`error: ${error.message}`);
+    });
+    ls.on("close", code => {
+        checkBranch();
+    });
+}
+
+function checkBranch() {
+    currentBranch = currentBranch.trim();
+    if (currentBranch == 'master' || currentBranch == 'main') {
+        setRemoteDataAndCheckForEnv();
+    } else {
+        console.log('\Tag can only be created from master or main.\nYour current branch is', currentBranch);
+    }
+}
 
 function setRemoteDataAndCheckForEnv() {
     var ls = spawn('git', ['remote', '-v']);
@@ -28,7 +54,7 @@ function setRemoteDataAndCheckForEnv() {
         console.log(`error: ${error.message}`);
     });
     ls.on("close", code => {
-        if (remoteData.match(/\@([^)]+)\:/).pop() == "github.com") {
+        if (remoteData.includes('github')) {
             if (!process.env.GITHUB_PERSONAL_TOKEN) {
                 console.error("Please check GITHUB_PERSONAL_TOKEN in your env file");
                 return;
@@ -56,11 +82,21 @@ function getVersion() {
 }
 
 function checkOrigin() {
-    if (remoteData.match(/\@([^)]+)\:/).pop() == "github.com") {
+    if (remoteData.includes("github.com")) {
+        let owner;
+        let repo;
         let remoteSample = remoteData.match(/\:([^)]+)\./).pop();
-        let gitVariables = remoteSample.split('/');
-        let owner = gitVariables[0].trim();
-        let repo = gitVariables[1].trim();
+
+        if (remoteSample.includes('github.com')) {
+            let gitVariables = remoteSample.split('/');
+            owner = gitVariables[3].trim();
+            repo = gitVariables[4].trim();
+        }
+        else {
+            let gitVariables = remoteSample.split('/');
+            owner = gitVariables[0].trim();
+            repo = gitVariables[1].trim();
+        }
         createTagGithub(owner, repo);
     } else {
         createTagGitlab();
