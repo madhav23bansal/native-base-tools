@@ -83,10 +83,20 @@ function getVersion() {
 
 function checkOrigin() {
     if (remoteData.includes("github.com")) {
+        let owner;
+        let repo;
         let remoteSample = remoteData.match(/\:([^)]+)\./).pop();
-        let gitVariables = remoteSample.split('/');
-        let owner = gitVariables[0].trim();
-        let repo = gitVariables[1].trim();
+
+        if (remoteSample.includes('github.com')) {
+            let gitVariables = remoteSample.split('/');
+            owner = gitVariables[3].trim();
+            repo = gitVariables[4].trim();
+        }
+        else {
+            let gitVariables = remoteSample.split('/');
+            owner = gitVariables[0].trim();
+            repo = gitVariables[1].trim();
+        }
         createTagGithub(owner, repo);
     } else {
         createTagGitlab();
@@ -99,7 +109,6 @@ function createTagGithub(owner, repo) {
     } else {
         preRelease = false;
     }
-    console.log(process.env.GITHUB_PERSONAL_TOKEN);
 
     let tagName = `v${packageJsonVersion}`;
     octokit.rest.repos.createRelease({
