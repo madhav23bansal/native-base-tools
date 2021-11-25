@@ -32,7 +32,7 @@ function setRemoteDataAndCheckForEnv() {
         console.log(`error: ${error.message}`);
     });
     ls.on("close", code => {
-        if (remoteData.match(/\@([^)]+)\:/).pop() == "github.com") {
+        if (remoteData.includes('github.com')) {
             if (!process.env.GITHUB_PERSONAL_TOKEN) {
                 console.error("Please check GITHUB_PERSONAL_TOKEN in your env file");
                 return;
@@ -248,7 +248,7 @@ function createReleaseBranch() {
 }
 
 function createPR() {
-    if (remoteData.match(/\@([^)]+)\:/).pop() == "github.com") {
+    if (remoteData.includes("github.com")) {
         let remoteSample = remoteData.match(/\:([^)]+)\./).pop();
         let gitVariables = remoteSample.split('/');
         let owner = gitVariables[0].trim();
@@ -280,6 +280,7 @@ function pushToGithub(repo, owner, prTitle, base, head) {
 }
 
 function createPRforGithub(repo, owner, title, base, head) {
+    console.log(process.env.GITHUB_PERSONAL_TOKEN);
     octokit.rest.pulls.create({
         owner: owner,
         repo: repo,
