@@ -27,7 +27,7 @@ let branchNameQuestion = [
   },
 ];
 
-async function checkValidBranch() {
+async function checkValidBaseBranch() {
   exec("git branch --show-current", (err, stdout, stderr) => {
     if (err) console.log(err);
     else if (stderr) console.log(stderr);
@@ -42,7 +42,7 @@ async function checkValidBranch() {
   });
 }
 async function createBranch() {
-  if (checkValidBranch()) {
+  if (checkValidBaseBranch()) {
     console.error(
       "Base branch should be patch, minor, canary-patch, canary-minor or master"
     );
