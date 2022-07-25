@@ -324,8 +324,6 @@ function pushToGithub(repo, owner, prTitle, base, head) {
 }
 
 function createPRforGithub(repo, owner, title, base, head) {
-  console.log(repo, owner, title, base, head);
-  console.log(process.env.GITHUB_PERSONAL_TOKEN);
   octokit.rest.pulls.create({
     owner: owner,
     repo: repo,
