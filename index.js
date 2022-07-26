@@ -6,12 +6,19 @@ const { createRelease } = require("./scripts/create-release");
 const { createTag } = require("./scripts/create-tag");
 const { publishVersion } = require("./scripts/publish-version");
 const { createPullRequest } = require("./scripts/create-pr");
+const { upgradeNbVersion } = require("./scripts/upgrade-nb-version");
+const {
+  publishNativeBaseTemplates,
+} = require("./scripts/publish-nb-templates");
+
 let options = [
   { title: "Create Branch", value: createBranch },
   { title: "Create Pull Request", value: createPullRequest },
   { title: "Create Release", value: createRelease },
   { title: "Create Tag", value: createTag },
   { title: "Publish package", value: publishVersion },
+  { title: "Upgrade native-base-templates", value: upgradeNbVersion },
+  { title: "Publish native-base-templates", value: publishNativeBaseTemplates },
 ];
 
 let promptsConfig = [
