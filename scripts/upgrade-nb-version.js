@@ -8,6 +8,26 @@ const { spawn, exec, execSync } = require("child_process");
 const { createPullRequest } = require("./create-pr");
 var lib = resolve("./");
 const utils = require("./utils");
+const getVersionPath = __dirname + "/get-package-json-version.sh";
+
+const releaseVersionType = "patch";
+
+function getVersion() {
+  var ls = spawn("sh", [getVersionPath]);
+  ls.stdout.on("data", function (data) {
+    packageJsonVersion = `${data}`;
+    packageJsonVersion = packageJsonVersion.trim();
+  });
+  ls.stderr.on("data", (data) => {
+    console.log(`stderr: ${data}`);
+  });
+  ls.on("error", (error) => {
+    console.log(`error: ${error.message}`);
+  });
+  ls.on("close", (code) => {
+    console.log("Finished!");
+  });
+}
 
 let nbVersionQuestion = [
   {
@@ -17,6 +37,42 @@ let nbVersionQuestion = [
     initial: "latest",
   },
 ];
+
+function bumpVersion(packageJsonVersion, currentReleaseVersionType = "patch") {
+  let parsedArray = packageJsonVersion.split(".");
+  //TODO: Add condition to check version type in future.
+  /**
+   * parsedArray[0] Major
+   * parsedArray[1] Minor
+   * parsedArray[2] Patch
+   */
+  parsedArray[2] = parseFloat(parsedArray[2]) + 1;
+  let final = parsedArray.join(".");
+  return final;
+}
+
+function updatePackageJsonVersion(path, version) {
+  const data = fs.readFileSync(path, {
+    encoding: "utf8",
+    flag: "r",
+  });
+
+  const jsonTemplateData = JSON.parse(data);
+  jsonTemplateData.version = version;
+
+  fs.writeFileSync(path, JSON.stringify(jsonTemplateData));
+  spawn("npx", ["prettier", "--write", path]);
+}
+
+function getVersion(path) {
+  const data = fs.readFileSync(path, {
+    encoding: "utf8",
+    flag: "r",
+  });
+
+  const jsonTemplateData = JSON.parse(data);
+  return jsonTemplateData.version;
+}
 
 async function upgradeNbVersion() {
   let nbVersion;
@@ -32,8 +88,6 @@ async function upgradeNbVersion() {
     nbVersion = execSync("npm show native-base version").toString().trim();
   }
 
-  //config --get remote.origin.url
-  // var ls = execSync("git", ["config", "--get", `remote.origin.url`]);
   var gitRemoteURL = execSync("git config --get remote.origin.url").toString();
 
   if (gitRemoteURL.trim() !== utils.gitTemplateRemoteURL) {
@@ -47,33 +101,19 @@ async function upgradeNbVersion() {
   return;
 }
 
-function createNewBranch(branchName, nbVersion) {
+function createNewBranch(branchName) {
   try {
     execSync(`git checkout -b ${branchName}`);
   } catch (Err) {
     execSync(`git checkout ${branchName}`);
   }
-  // return new Promise((resolve, reject) => {
-  //   var ls = spawn("git", ["checkout", "-b", `${branchName}`]);
-
-  //   ls.stdout.on("data", function (data) {
-  //     console.log(`${data}`.trim());
-  //   });
-  //   ls.stderr.on("data", (data) => {
-  //     console.log(`stderr: ${data}`);
-  //   });
-  //   ls.on("error", (error) => {
-  //     console.log(`error: ${error.message}`);
-  //   });
-  //   ls.on("close", (code) => {
-  //     console.log("Finished!");
-  //   });
-  // });
 }
 
 async function runYanAdd(nbVersion) {
   let promises = [];
   fs.readdirSync(lib).forEach(function (mod) {
+    const packageJsonPath = join(lib, mod + "/package.json");
+
     let modPath;
 
     if (
@@ -90,13 +130,14 @@ async function runYanAdd(nbVersion) {
       modPath = join(lib, mod);
     }
 
-    // console.log(modPath, "mode path hee yee", lib);
-
     if (
       mod === "cra-template-nativebase" ||
       mod === "cra-template-nativebase-typescript"
     ) {
-      // TODO:  Logic to write in template.json file for CRA apps (add "/template.json later in original template")
+      const templateVersion = getVersion(packageJsonPath);
+      const bumpedTemplateVersion = bumpVersion(templateVersion);
+      updatePackageJsonVersion(packageJsonPath, bumpedTemplateVersion);
+
       modPath = join(modPath, "template.json");
       const data = fs.readFileSync(modPath, {
         encoding: "utf8",
@@ -105,8 +146,6 @@ async function runYanAdd(nbVersion) {
 
       const jsonTemplateData = JSON.parse(data);
       jsonTemplateData.package.dependencies["native-base"] = nbVersion;
-
-      // console.log(jsonTemplateData, "JSON TEMPLATE DATA");
 
       fs.writeFileSync(modPath, JSON.stringify(jsonTemplateData));
 
@@ -138,6 +177,10 @@ async function runYanAdd(nbVersion) {
       mod === "expo-nativease" ||
       mod === "expo-nativebase-typescript"
     ) {
+      const templateVersion = getVersion(packageJsonPath);
+      const bumpedTemplateVersion = bumpVersion(templateVersion);
+      updatePackageJsonVersion(packageJsonPath, bumpedTemplateVersion);
+
       const promise = new Promise((resolve, reject) => {
         const yarnCmd = `native-base@${nbVersion}`;
         const ls = spawn("yarn", ["add", yarnCmd], {
@@ -199,7 +242,6 @@ function commitChanges(commitMessage) {
   });
   ls.on("close", (code) => {
     createPullRequest();
-    // console.log("FINIESHED TILL PR");
   });
 }
 
