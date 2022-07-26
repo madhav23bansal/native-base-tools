@@ -4,15 +4,19 @@ const prompts = require("prompts");
 var fs = require("fs");
 var resolve = require("path").resolve;
 var join = require("path").join;
-const { spawn } = require("child_process");
+const { spawn, exec, execSync } = require("child_process");
 const { createPullRequest } = require("./create-pr");
 var lib = resolve("./");
+
+const gitTemplateRemoteURL =
+  "git@github.com:GeekyAnts/nativebase-templates.git";
 
 let nbVersionQuestion = [
   {
     type: "text",
     name: "value",
     message: `Please enter native-base version`,
+    initial: "latest",
   },
 ];
 
@@ -26,30 +30,51 @@ async function upgradeNbVersion() {
     console.error("Please enter native-base version");
     return;
   }
-  // runCmd(nbVersion);
+  if (nbVersion === "latest") {
+    nbVersion = execSync("npm show native-base version").toString().trim();
+  }
+
+  //config --get remote.origin.url
+  // var ls = execSync("git", ["config", "--get", `remote.origin.url`]);
+  var gitRemoteURL = execSync("git config --get remote.origin.url").toString();
+
+  if (gitRemoteURL.trim() !== gitTemplateRemoteURL) {
+    console.error(`Wrong git repo!, ${gitRemoteURL}`);
+    return;
+  }
   createNewBranch("nb-version-change/" + nbVersion, nbVersion);
+  await runYanAdd(nbVersion);
   addChanges();
+
+  return;
 }
 
 function createNewBranch(branchName, nbVersion) {
-  var ls = spawn("git", ["checkout", "-b", `${branchName}`]);
+  try {
+    execSync(`git checkout -b ${branchName}`);
+  } catch (Err) {
+    execSync(`git checkout ${branchName}`);
+  }
+  // return new Promise((resolve, reject) => {
+  //   var ls = spawn("git", ["checkout", "-b", `${branchName}`]);
 
-  ls.stdout.on("data", function (data) {
-    console.log(`${data}`.trim());
-  });
-  ls.stderr.on("data", (data) => {
-    console.log(`stderr: ${data}`);
-  });
-  ls.on("error", (error) => {
-    console.log(`error: ${error.message}`);
-  });
-  ls.on("close", (code) => {
-    runCmd(nbVersion);
-    console.log("Finished!");
-  });
+  //   ls.stdout.on("data", function (data) {
+  //     console.log(`${data}`.trim());
+  //   });
+  //   ls.stderr.on("data", (data) => {
+  //     console.log(`stderr: ${data}`);
+  //   });
+  //   ls.on("error", (error) => {
+  //     console.log(`error: ${error.message}`);
+  //   });
+  //   ls.on("close", (code) => {
+  //     console.log("Finished!");
+  //   });
+  // });
 }
 
-function runCmd(nbVersion) {
+async function runYanAdd(nbVersion) {
+  let promises = [];
   fs.readdirSync(lib).forEach(function (mod) {
     let modPath;
 
@@ -67,7 +92,7 @@ function runCmd(nbVersion) {
       modPath = join(lib, mod);
     }
 
-    console.log(modPath, "mode path hee yee", lib);
+    // console.log(modPath, "mode path hee yee", lib);
 
     if (
       mod === "cra-template-nativebase" ||
@@ -83,23 +108,28 @@ function runCmd(nbVersion) {
       const jsonTemplateData = JSON.parse(data);
       jsonTemplateData.package.dependencies["native-base"] = nbVersion;
 
-      console.log(jsonTemplateData, "JSON TEMPLATE DATA");
+      // console.log(jsonTemplateData, "JSON TEMPLATE DATA");
 
       fs.writeFileSync(modPath, JSON.stringify(jsonTemplateData));
 
-      const ls = spawn("npx", ["prettier", "--write", modPath]);
-      ls.stdout.on("data", function (data) {
-        console.log(`${data}`.trim(), "data");
+      const promise = new Promise((resolve, reject) => {
+        const ls = spawn("npx", ["prettier", "--write", modPath]);
+        ls.stdout.on("data", function (data) {
+          console.log(`${data}`.trim(), "data");
+        });
+        ls.stderr.on("data", (data) => {
+          console.log(`stderr: getcurrent ${data}`);
+        });
+        ls.on("error", (error) => {
+          console.log(`error: ${error.message}`);
+          reject();
+        });
+        ls.on("close", (code) => {
+          console.log("Finished!");
+          resolve();
+        });
       });
-      ls.stderr.on("data", (data) => {
-        console.log(`stderr: getcurrent ${data}`);
-      });
-      ls.on("error", (error) => {
-        console.log(`error: ${error.message}`);
-      });
-      ls.on("close", (code) => {
-        console.log("Finished!");
-      });
+      promises.push(promise);
     } else if (
       mod === "react-native-template-nativebase" ||
       mod === "react-native-template-nativebase-typescript" ||
@@ -110,23 +140,34 @@ function runCmd(nbVersion) {
       mod === "expo-nativease" ||
       mod === "expo-nativebase-typescript"
     ) {
-      const yarnCmd = `native-base@${nbVersion}`;
-      const ls = spawn("yarn", ["add", yarnCmd], {
-        cwd: modPath,
+      const promise = new Promise((resolve, reject) => {
+        const yarnCmd = `native-base@${nbVersion}`;
+        const ls = spawn("yarn", ["add", yarnCmd], {
+          cwd: modPath,
+        });
+        ls.stdout.on("data", function (data) {
+          console.log(`${data}`.trim());
+        });
+        ls.stderr.on("data", (data) => {
+          console.log(`stderr: getcurrent ${data}`);
+        });
+        ls.on("error", (error) => {
+          console.log(`error: ${error.message}`);
+          reject();
+        });
+        ls.on("close", (code) => {
+          console.log("Finished!");
+          resolve();
+        });
       });
-      ls.stdout.on("data", function (data) {
-        console.log(`${data}`.trim());
-      });
-      ls.stderr.on("data", (data) => {
-        console.log(`stderr: getcurrent ${data}`);
-      });
-      ls.on("error", (error) => {
-        console.log(`error: ${error.message}`);
-      });
-      ls.on("close", (code) => {
-        console.log("Finished!");
-      });
+      promises.push(promise);
     }
+  });
+
+  return new Promise((resolve, reject) => {
+    Promise.all(promises).then((values) => {
+      resolve();
+    });
   });
 }
 

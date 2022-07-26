@@ -30,7 +30,9 @@ function setRemoteDataAndCheckForEnv() {
   ls.on("close", (code) => {
     if (remoteData.includes("github.com")) {
       if (!process.env.GITHUB_PERSONAL_TOKEN) {
-        console.error("Please check GITHUB_PERSONAL_TOKEN in your env file");
+        console.error(
+          "Please check GITHUB_PERSONAL_TOKEN in your env file \n (create token from https://github.com/settings/tokens)"
+        );
         return;
       }
     }
