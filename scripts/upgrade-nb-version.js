@@ -7,9 +7,7 @@ var join = require("path").join;
 const { spawn, exec, execSync } = require("child_process");
 const { createPullRequest } = require("./create-pr");
 var lib = resolve("./");
-
-const gitTemplateRemoteURL =
-  "git@github.com:GeekyAnts/nativebase-templates.git";
+const utils = require("./utils");
 
 let nbVersionQuestion = [
   {
@@ -38,7 +36,7 @@ async function upgradeNbVersion() {
   // var ls = execSync("git", ["config", "--get", `remote.origin.url`]);
   var gitRemoteURL = execSync("git config --get remote.origin.url").toString();
 
-  if (gitRemoteURL.trim() !== gitTemplateRemoteURL) {
+  if (gitRemoteURL.trim() !== utils.gitTemplateRemoteURL) {
     console.error(`Wrong git repo!, ${gitRemoteURL}`);
     return;
   }
