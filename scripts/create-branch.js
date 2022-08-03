@@ -1,8 +1,8 @@
 #! /usr/bin/env node
 
 const prompts = require("prompts");
-const { spawn, exec } = require("child_process");
-
+const { spawn } = require("child_process");
+const getBranchPath = __dirname + "/get-branch.sh";
 let options = [
   { title: "Feature Branch", value: "feat" },
   { title: "Fix Branch", value: "fix" },
@@ -27,22 +27,35 @@ let branchNameQuestion = [
   },
 ];
 
-async function checkValidBaseBranch() {
-  exec("git branch --show-current", (err, stdout, stderr) => {
-    if (err) console.log(err);
-    else if (stderr) console.log(stderr);
-    else if (
-      !["patch", "minor", "canary-patch", "canary-minor", "master"].includes(
-        stdout.trim()
-      )
-    ) {
-      return true;
-    }
-    return false;
+async function createBranch() {
+  getCurrentBranch();
+}
+function getCurrentBranch() {
+  var ls = spawn("sh", [getBranchPath]);
+  ls.stdout.on("data", function (data) {
+    currentBranch = `${data}`;
+  });
+  ls.stderr.on("data", (data) => {
+    console.log(`stderr: getcurrent ${data}`);
+  });
+  ls.on("error", (error) => {
+    console.log(`error: ${error.message}`);
+  });
+  ls.on("close", (code) => {
+    createBranchAfterCheck();
   });
 }
-async function createBranch() {
-  if (checkValidBaseBranch()) {
+async function createBranchAfterCheck() {
+  currentBranch = currentBranch.trim();
+  if (
+    ![
+      "master",
+      "patch",
+      "canary-patch",
+      "canary-minor",
+      "canary-master",
+    ].includes(currentBranch)
+  ) {
     console.error(
       "Base branch should be patch, minor, canary-patch, canary-minor or master"
     );
